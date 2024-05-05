@@ -371,13 +371,20 @@ class GenerateTimeTableMixin:
         if self._groups is None:
             return None
 
-        updated_groups = {}
-        for timeslots, op_secs in self._groups.items():
-            updated_groups[timeslots] = [
-                op_sec
-                for op_sec in op_secs
-                if (op_sec is not None and op_sec.open_seats > 0)
-            ]
+        updated_groups: list[
+            dict[tuple[tuple[str, datetime.time, datetime.time]], list[OpenedSection]]
+        ] = []
+        for group in self._groups:
+            updated_group: dict[
+                tuple[tuple[str, datetime.time, datetime.time]], list[OpenedSection]
+            ] = {}
+            for timeslots, op_secs in group.items():
+                updated_group[timeslots] = [
+                    op_sec
+                    for op_sec in op_secs
+                    if (op_sec is not None and op_sec.open_seats > 0)
+                ]
+            updated_groups.append(updated_group)
 
         self._groups = updated_groups
 
