@@ -398,9 +398,8 @@ class GenerateTimeTableMixin:
                 tuple[tuple[str, datetime.time, datetime.time]], list[OpenedSection]
             ] = {}
             for timeslots in group:
-                for _, start_time, _ in timeslots:
-                    if start_time >= min_start_time:  # not early class
-                        updated_group[timeslots] = group[timeslots]
+                if all(start_time >= min_start_time for _, start_time, _ in timeslots):
+                    updated_group[timeslots] = group[timeslots]
             updated_groups.append(updated_group)
 
         self._groups = updated_groups
