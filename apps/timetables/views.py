@@ -59,10 +59,13 @@ class TimeTableView(RetrieveUpdateDestroyAPIView):
         # get the remaining timetables for the same semester and user, with order greater than the deleted timetable's order
         remaining_timetables = TimeTable.objects.filter(
             user=instance.user, semester=instance.semester, order__gt=instance.order
-        )
+        ).order_by("order")
 
-        # decrement the order of the remaining timetables, and update as bulk
-        remaining_timetables.update(order=F("order") - 1)
+        # decrement the order of the remaining timetables
+        with transaction.atomic():
+            for timetable in remaining_timetables:
+                timetable.order = F("order") - 1
+                timetable.save()
 
 
 class TimeTableSectionAddView(CreateAPIView):
