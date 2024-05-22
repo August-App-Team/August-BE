@@ -170,7 +170,10 @@ class TimeTableReorderView(APIView):
             )
         
         # Mapping of old order and new order
-        order_mapping = {old_order: new_order for old_order, new_order in enumerate(new_order)}
+        order_mapping = {old_order: new_order for new_order, old_order in enumerate(new_order)}
+        # Example
+        # Let there be 3 timetables ordered as 0 -> 1 -> 2 and NEW_ORDER be given as [2, 0, 1]
+        # Then, order_mapping = {2:0, 0:1, 1:2}. This effectively changes the ordering of timetables to 2 -> 0 -> 1
 
         # Temporarily update the orders to (maximum order value) + 1 + (new order value)
         with transaction.atomic():
