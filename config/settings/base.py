@@ -203,3 +203,8 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
 }
+
+FRIENDS = {
+    "FRIEND_CODE_LENGTH": 8,
+    "FRIEND_CODE_EXPIRATION": 48,  # hours
+}
