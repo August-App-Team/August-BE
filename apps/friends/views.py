@@ -4,7 +4,7 @@ from django.db.models import Q
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, DestroyAPIView
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -73,32 +73,30 @@ class FriendTimeTableView(RetrieveAPIView):
             # user and friend_id are friends
 
             try:
-                return TimeTable.objects.get(user=friend_id, semester__code=semester, order=0)
+                return TimeTable.objects.get(
+                    user=friend_id, semester__code=semester, order=0
+                )
             except TimeTable.DoesNotExist:
                 raise NotFound("No timetable exists for given user and semester.")
         else:
             raise PermissionDenied("Access only allowed to friend.")
-    
+
     def get(self, request, *args, **kwargs):
         try:
             return super().retrieve(request, *args, **kwargs)
         except NotFound as e:
-            return Response(
-                {"detail": str(e)}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"detail": str(e)}, status=status.HTTP_404_NOT_FOUND)
         except PermissionDenied as e:
-            return Response(
-                {"detail": str(e)}, status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
 
 
 class GenerateRequestCodeView(APIView):  # resume here
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        code = get_random_code(settings.FRIENDS['FRIEND_CODE_LENGTH'])
+        code = get_random_code(settings.FRIENDS["FRIEND_CODE_LENGTH"])
         expires_at = timezone.now() + timezone.timedelta(
-            hours=settings.FRIENDS['FRIEND_CODE_EXPIRATION']
+            hours=settings.FRIENDS["FRIEND_CODE_EXPIRATION"]
         )
         friend_code = FriendCode(
             code=code, expires_at=expires_at, generated_by=request.user
@@ -116,8 +114,8 @@ class AcceptFriendRequestView(APIView):
         code = str(request.query_params.get("code"))
         if not code:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        
-        if not is_valid_code(code, settings.FRIENDS['FRIEND_CODE_LENGTH']):
+
+        if not is_valid_code(code, settings.FRIENDS["FRIEND_CODE_LENGTH"]):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         try:
@@ -142,3 +140,26 @@ class AcceptFriendRequestView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+class FriendDeleteView(DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = FriendSerializer
+
+    def get_object(self):
+        user = self.request.user
+        friend_id = self.kwargs["friend_id"]
+
+        friend = Friend.objects.filter(
+            Q(user1=user, user2=friend_id) | Q(user1=friend_id, user2=user)
+        ).first()
+        if friend is not None:
+            return friend
+        else:
+            raise NotFound("Not a friend or invalid friend_id.")
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except NotFound as e:
+            return Response(status=status.HTTP_404_NOT_FOUND)
