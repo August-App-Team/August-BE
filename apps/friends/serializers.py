@@ -11,3 +11,11 @@ class FriendSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "name", "profile_image", "year_in_school", "department"]
         read_only_fields = fields
+
+class MeetingIntervalSerializer(serializers.Serializer):
+    days = serializers.CharField()
+    start_time = serializers.TimeField(format="%H:%M")
+    end_time = serializers.TimeField(format="%H:%M")
+
+    def to_representation(self, instance):
+        return {"days": instance[0], "start_time": instance[1], "end_time": instance[2]}

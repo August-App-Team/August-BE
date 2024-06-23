@@ -22,4 +22,9 @@ urlpatterns = [
         "accept/", views.AcceptFriendRequestView.as_view(), name="accept-friend-request"
     ),
     path("<int:friend_id>/", views.FriendDeleteView.as_view(), name="friend-detail"),
+    path(
+        "<int:friend_id>/tables/<int:semester>/hangout/",
+        views.FriendHangoutView.as_view(),
+        name="friend-hangout",
+    ),
 ]

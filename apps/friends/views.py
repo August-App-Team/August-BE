@@ -10,8 +10,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.friends.models import Friend, FriendCode
-from apps.friends.serializers import FriendSerializer
-from apps.friends.utils import get_random_code, is_valid_code
+from apps.friends.serializers import FriendSerializer, MeetingIntervalSerializer
+from apps.friends.utils import get_hangout_intervals, get_random_code, is_valid_code
 from apps.timetables.models import TimeTable
 from apps.timetables.serializers import TimeTableSerializer
 from rest_framework.exceptions import NotFound, PermissionDenied
@@ -163,3 +163,49 @@ class FriendDeleteView(DestroyAPIView):
             return super().destroy(request, *args, **kwargs)
         except NotFound as e:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+class FriendHangoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        friend_id = self.kwargs["friend_id"]
+        semester = self.kwargs["semester"]
+
+        if Friend.objects.filter(
+            Q(user1=user, user2=friend_id) | Q(user1=friend_id, user2=user)
+        ).exists():
+            # user and friend_id are friends
+            try:
+                timetable_friend = TimeTable.objects.get(
+                    user=friend_id, semester__code=semester, order=0
+                )
+                timetable_user = TimeTable.objects.get(
+                    user=user, semester__code=semester, order=0
+                )
+
+                # get the set of (day, start_time, end_time) of the OpenedSections that the user and friend are taking
+                meetings_user = timetable_user.opened_section_entries.values_list(
+                    "opened_section__meeting__day__day",
+                    "opened_section__meeting__duration__start_time",
+                    "opened_section__meeting__duration__end_time",
+                )
+
+                meetings_friend = timetable_friend.opened_section_entries.values_list(
+                    "opened_section__meeting__day__day",
+                    "opened_section__meeting__duration__start_time",
+                    "opened_section__meeting__duration__end_time",
+                )
+
+                hangout_intervals = get_hangout_intervals(meetings_user, meetings_friend)
+
+                return Response(
+                    {
+                        "meetings": MeetingIntervalSerializer(hangout_intervals, many=True).data
+                    }
+                )
+
+            except TimeTable.DoesNotExist:
+                return Response({"detail": "No timetable exists for given user and semester."}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({"detail": "Access only allowed to friend."}, status=status.HTTP_403_FORBIDDEN)
