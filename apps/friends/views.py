@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, date
 from django.conf import settings
 from django.db.models import Q
 from django.contrib.auth import get_user_model
@@ -198,6 +198,13 @@ class FriendHangoutView(APIView):
                 )
 
                 hangout_intervals = get_hangout_intervals(meetings_user, meetings_friend)
+
+                # remove hangout intervals that last lte 10 mins
+                hangout_intervals = [
+                    interval
+                    for interval in hangout_intervals
+                    if ((datetime.combine(date.today(), interval[2]) - datetime.combine(date.today(), interval[1])).seconds > 600)
+                ]
 
                 return Response(
                     {
