@@ -5,12 +5,15 @@ from apps.users.serializers import ImageOrUrlField
 
 class FriendSerializer(serializers.ModelSerializer):
     profile_image = ImageOrUrlField()
-    department = serializers.CharField(source="department.nickname")
+    department = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = ["id", "name", "profile_image", "year_in_school", "department"]
         read_only_fields = fields
+
+    def get_department(self, obj):
+        return obj.department.nickname if obj.department else None
 
 class MeetingIntervalSerializer(serializers.Serializer):
     days = serializers.CharField()
