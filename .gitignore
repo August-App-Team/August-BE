@@ -1,6 +1,7 @@
 # August
 scrape_config.yaml
 test/
+run_gunicorn.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
