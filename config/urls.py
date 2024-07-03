@@ -37,6 +37,7 @@ urlpatterns = [
     path("departments/", DepartmentListView.as_view()),
     path("dj-rest-auth/", include("dj_rest_auth.urls")),
     path("dj-rest-auth/registration/", include("dj_rest_auth.registration.urls")),
+    path("allauth/", include("allauth.urls")),
     path("users/", include("users.urls")),
     path("timetables/", include("timetables.urls")),
     path("friends/", include("friends.urls")),
@@ -47,3 +48,4 @@ if settings.DEBUG:
         path("__debug__/", include("debug_toolbar.urls")),
     ] + urlpatterns
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
