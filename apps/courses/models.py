@@ -1,6 +1,5 @@
 from django.db import models
-from collections import namedtuple
-
+from django_resized import ResizedImageField
 
 class InstitutionSupportedSemester(models.Model):
     institution = models.ForeignKey("Institution", on_delete=models.CASCADE)
@@ -13,6 +12,15 @@ class InstitutionSupportedSemester(models.Model):
 class Institution(models.Model):
     full_name = models.CharField(max_length=100)
     nickname = models.CharField(max_length=50)
+    inst_logo = ResizedImageField(
+        "Institution Logo",
+        upload_to="institution_logos",
+        size=[200, 200],
+        quality=100,
+        keep_meta=False,
+        blank=True,
+        null=True,
+    )
 
     def __str__(self):
         return f"{self.nickname}({self.full_name})"

@@ -198,12 +198,15 @@ class CourseSectionSerializer(BaseCourseSerializer):
 
 
 class InstitutionSerializer(serializers.ModelSerializer):
+    logo = serializers.ImageField(source="inst_logo")
+
     class Meta:
         model = Institution
         fields = (
             "id",
             "full_name",
             "nickname",
+            "logo",
         )
 
 
