@@ -193,7 +193,9 @@ class OpenedSectionByCourseByInstructorListView(generics.ListAPIView):
 
 class SemestersListView(generics.ListAPIView):
     def get_queryset(self):
-        institution_id = self.request.query_params.get("institution_id", 1)
+        institution_id = self.request.query_params.get("institution_id")
+        if not institution_id:
+            raise ValidationError('Missing "institution_id" query parameter')
         return InstitutionSupportedSemester.objects.filter(
             institution_id=institution_id
         )
@@ -202,6 +204,12 @@ class SemestersListView(generics.ListAPIView):
         queryset = self.get_queryset()
         semester_codes = list(queryset.values_list("semester__code", flat=True))
         return Response(semester_codes)
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            return self.list(request, *args, **kwargs)
+        except ValidationError as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
 
 class InstitutionListView(generics.ListAPIView):
@@ -214,6 +222,13 @@ class DepartmentListView(generics.ListAPIView):
     serializer_class = DepartmentSerializer
 
     def get_queryset(self):
-        institution_id = self.request.query_params.get("institution_id", 1)
-
+        institution_id = self.request.query_params.get("institution_id")
+        if not institution_id:
+            raise ValidationError('Missing "institution_id" query parameter')
         return super().get_queryset().filter(institution_id=institution_id)
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            return self.list(request, *args, **kwargs)
+        except ValidationError as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
