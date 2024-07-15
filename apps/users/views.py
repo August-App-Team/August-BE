@@ -7,10 +7,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 
+from apps.users.oauth2_adapters import (
+    GoogleAndroidOAuth2Adapter,
+    GoogleWebOAuth2Adapter,
+    GoogleiOSOAuth2Adapter,
+)
 from apps.users.permissions import IsHimselfOrAdmin
 from apps.users.serializers import CustomUserDetailsSerializer, FullUserSerializer
 from config.settings.base import get_secret
@@ -27,7 +31,7 @@ class GoogleLoginView(APIView):
 
 
 class GoogleLoginCallbackView(SocialLoginView):
-    adapter_class = GoogleOAuth2Adapter
+    adapter_class = GoogleWebOAuth2Adapter
     callback_url = get_secret("DEPLOY_HOST_PORT") + "/users/google/login/callback/"
     client_class = OAuth2Client
 
@@ -40,6 +44,14 @@ class GoogleLoginCallbackView(SocialLoginView):
         self.request.data.update({"code": code})
 
         return self.post(request, args, kwargs)
+
+
+class GoogleLoginiOSCallbackView(GoogleLoginCallbackView):
+    adapter_class = GoogleiOSOAuth2Adapter
+
+
+class GoogleLoginAndroidCallbackView(GoogleLoginCallbackView):
+    adapter_class = GoogleAndroidOAuth2Adapter
 
 
 class CheckRegisteredView(APIView):
@@ -73,9 +85,10 @@ class UserView(generics.RetrieveUpdateAPIView):
         except ValidationError as ve:
             return Response(data=dict(ve), status=status.HTTP_400_BAD_REQUEST)
 
+
 class UserDetailsView(generics.RetrieveUpdateAPIView):
     serializer_class = CustomUserDetailsSerializer
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated,)
 
     def get_object(self):
         return self.request.user
