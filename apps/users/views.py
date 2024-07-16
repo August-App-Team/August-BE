@@ -30,7 +30,7 @@ class GoogleLoginView(APIView):
         return redirect(url)
 
 
-class GoogleLoginCallbackView(SocialLoginView):
+class GoogleLoginCallbackView(SocialLoginView): # use authorization code grant - one that receives 'code' from client (web app)
     adapter_class = GoogleWebOAuth2Adapter
     callback_url = get_secret("DEPLOY_HOST_PORT") + "/users/google/login/callback/"
     client_class = OAuth2Client
@@ -46,11 +46,11 @@ class GoogleLoginCallbackView(SocialLoginView):
         return self.post(request, args, kwargs)
 
 
-class GoogleLoginiOSCallbackView(GoogleLoginCallbackView):
+class GoogleLoginiOSCallbackView(SocialLoginView): # to use implicit grant - one that receives 'access_token' from client app
     adapter_class = GoogleiOSOAuth2Adapter
 
 
-class GoogleLoginAndroidCallbackView(GoogleLoginCallbackView):
+class GoogleLoginAndroidCallbackView(SocialLoginView): # implicit grant
     adapter_class = GoogleAndroidOAuth2Adapter
 
 
