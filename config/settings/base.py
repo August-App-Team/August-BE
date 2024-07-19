@@ -184,8 +184,15 @@ REST_AUTH = {
     "JWT_AUTH_HTTPONLY": False,  # refresh_token will not be sent if True
 }
 
+# allauth
 ACCOUNT_ADAPTER = "apps.users.adapters.CustomAccountAdapter"
 SOCIALACCOUNT_ADAPTER = "apps.users.adapters.CustomSocialAccountAdapter"
+SOCIALACCOUNT_PROVIDERS = {
+  'google': {
+      'EMAIL_AUTHENTICATION': True
+  }
+}
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 
 AUTHENTICATION_BACKENDS = [
     # Needed to login by username in Django admin, regardless of `allauth`
