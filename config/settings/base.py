@@ -195,22 +195,11 @@ SOCIALACCOUNT_PROVIDERS = {
     "apple": {
         "APPS": [
             {
-                # Case: Web authorization flow
-                "client_id": get_secret("APPLE_SERVICE_ID"),
+                "client_id": str(get_secret("APPLE_BUNDLE_ID")) + "," + str(get_secret("APPLE_SERVICE_ID")),
                 "secret": get_secret("APPLE_KEY_ID"),
                 "key": get_secret("APPLE_TEAM_ID"),
                 "settings": {
                     "certificate_key": get_secret("APPLE_PRIVATE_KEY"),
-                },
-            },
-            {
-                # Case: Native authorization flow
-                "client_id": get_secret("APPLE_BUNDLE_ID"),
-                "secret": get_secret("APPLE_KEY_ID"),
-                "key": get_secret("APPLE_TEAM_ID"),
-                "settings": {
-                    "certificate_key": get_secret("APPLE_PRIVATE_KEY"),
-                    "hidden": True,
                 },
             },
         ]
