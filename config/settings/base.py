@@ -64,6 +64,7 @@ THIRD_PARTY_APPS = [
     "allauth.socialaccount",
     # django-allauth providers
     "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.apple",
 ]
 
 LOCAL_APPS = [
@@ -187,12 +188,34 @@ REST_AUTH = {
 # allauth
 ACCOUNT_ADAPTER = "apps.users.adapters.CustomAccountAdapter"
 SOCIALACCOUNT_ADAPTER = "apps.users.adapters.CustomSocialAccountAdapter"
-SOCIALACCOUNT_PROVIDERS = {
-  'google': {
-      'EMAIL_AUTHENTICATION': True
-  }
-}
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {"EMAIL_AUTHENTICATION": True},
+    "apple": {
+        "APPS": [
+            {
+                # Case: Web authorization flow
+                "client_id": get_secret("APPLE_SERVICE_ID"),
+                "secret": get_secret("APPLE_KEY_ID"),
+                "key": get_secret("APPLE_TEAM_ID"),
+                "settings": {
+                    "certificate_key": get_secret("APPLE_PRIVATE_KEY"),
+                },
+            },
+            {
+                # Case: Native authorization flow
+                "client_id": get_secret("APPLE_BUNDLE_ID"),
+                "secret": get_secret("APPLE_KEY_ID"),
+                "key": get_secret("APPLE_TEAM_ID"),
+                "settings": {
+                    "certificate_key": get_secret("APPLE_PRIVATE_KEY"),
+                    "hidden": True,
+                },
+            },
+        ]
+    },
+}
 
 AUTHENTICATION_BACKENDS = [
     # Needed to login by username in Django admin, regardless of `allauth`

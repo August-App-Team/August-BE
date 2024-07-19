@@ -7,6 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.apple.views import AppleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 
@@ -30,7 +32,8 @@ class GoogleLoginView(APIView):
         return redirect(url)
 
 
-class GoogleLoginCallbackView(SocialLoginView): # use authorization code grant - one that receives 'code' from client (web app)
+# use authorization code grant - one that receives 'code' from client (web app)
+class GoogleLoginCallbackView(SocialLoginView):
     adapter_class = GoogleWebOAuth2Adapter
     callback_url = get_secret("DEPLOY_HOST_PORT") + "/users/google/login/callback/"
     client_class = OAuth2Client
@@ -46,12 +49,20 @@ class GoogleLoginCallbackView(SocialLoginView): # use authorization code grant -
         return self.post(request, args, kwargs)
 
 
-class GoogleLoginiOSCallbackView(SocialLoginView): # to use implicit grant - one that receives 'access_token' from client app
+# to use implicit grant - one that receives 'access_token' from client app
+class GoogleLoginiOSCallbackView(SocialLoginView):
     adapter_class = GoogleiOSOAuth2Adapter
 
 
-class GoogleLoginAndroidCallbackView(SocialLoginView): # implicit grant
+# implicit grant
+class GoogleLoginAndroidCallbackView(SocialLoginView):
     adapter_class = GoogleAndroidOAuth2Adapter
+
+
+class AppleLoginCallbackView(SocialLoginView):
+    adapter_class = AppleOAuth2Adapter
+    callback_url = get_secret("DEPLOY_HOST_PORT") + "/users/apple/login/callback/"
+    client_class = OAuth2Client
 
 
 class CheckRegisteredView(APIView):
