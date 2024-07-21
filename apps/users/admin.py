@@ -70,7 +70,17 @@ class UserAdmin(BaseUserAdmin):
     list_display = ["id", "email", "is_staff", "name", "institution"]
     list_filter = ["is_staff", "institution"]
     fieldsets = [
-        (None, {"fields": ["email", "password", "is_active"]}),
+        (
+            None,
+            {
+                "fields": [
+                    "email",
+                    "password",
+                    "is_active",
+                    "date_joined",
+                ]
+            },
+        ),
         (
             "Personal info",
             {
