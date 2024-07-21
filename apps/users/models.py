@@ -81,7 +81,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         keep_meta=False,  # remove exif data
         upload_to="profile_images/",
         blank=True,
-        default="default_profile.png",
+        default="profile_images/default_profile.png",
     )
     date_joined = models.DateTimeField(default=timezone.now)
 
