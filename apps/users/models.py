@@ -73,7 +73,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     department = models.ForeignKey(
         "courses.Department", on_delete=models.DO_NOTHING, blank=True, null=True
     )
-    name = models.CharField(max_length=255, blank=True)
+    name = models.CharField(max_length=255, blank=True, default="")
     profile_image_file = ResizedImageField(
         size=[600, 600],
         crop=["middle", "center"],
@@ -81,10 +81,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         keep_meta=False,  # remove exif data
         upload_to="profile_images/",
         blank=True,
+        default="default_profile.png",
     )
     date_joined = models.DateTimeField(default=timezone.now)
 
-    profile_image_url = models.URLField(blank=True)
+    profile_image_url = models.URLField(blank=True, default="")
 
     FRESHMAN = "FR"
     SOPHOMORE = "SO"
@@ -131,6 +132,16 @@ class User(AbstractBaseUser, PermissionsMixin):
                     ]
                 }
                 raise ValidationError(message=error_dict)
+
+        if self.name is None:
+            # Set "name" to empty string since "name" is not nullable. CharField is not encouraged to be nullable.
+            self.name = ""
+        if self.profile_image_url is None:
+            # Case: No profile_image_url provided. -> Set profile_image_url to empty string and use default profile image.
+            self.profile_image_url = ""
+        else:
+            # Case: profile_image_url provided. -> To use this URL, set profile_image_file to None.
+            self.profile_image_file = None
         super().save(*args, **kwargs)
 
     @property
