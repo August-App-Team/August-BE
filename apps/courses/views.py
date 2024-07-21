@@ -27,32 +27,24 @@ from apps.courses.models import (
 class OpenedSectionListView(generics.ListAPIView):
     def get_queryset(self):
         semester_code = self.request.query_params.get("semester", None)
-        query_type = self.request.query_params.get("querytype", None)
         query = self.request.query_params.get("query", None)
         institution_id = self.request.query_params.get("institution_id", 1)
 
         if semester_code is None:
             raise ValidationError('Missing "semester" query parameter')
-        if query_type is None:
-            raise ValidationError('Missing "querytype" query parameter')
         if query is None:
             raise ValidationError('Missing "query" query parameter')
 
         queryset = OpenedSection.objects.filter(
             semester__code=semester_code, section__course__institution_id=institution_id
         ).select_related("section__course")
-        if query_type == "code":
-            if len(query) < 4:
-                raise ValidationError("Provide course code of at least 4 letters")
-            queryset = queryset.filter(section__course__course_code__icontains=query)
-        elif query_type == "name":
-            if len(query) < 4:
-                raise ValidationError("Provide course name of at least 4 letters")
-            queryset = queryset.filter(section__course__name__icontains=query)
-        else:
-            raise ValidationError(
-                'Invalid "querytype" query parameter. Acceptable values are "code", "name"'
-            )
+        if len(query) < 4:
+            raise ValidationError("Provide query of at least 4 letters")
+
+        queryset = queryset.filter(
+            Q(section__course__course_code__icontains=query)
+            | Q(section__course__name__icontains=query)
+        )
 
         # prefetch related teach, instructors
         teach_set_prefetch = Prefetch(
@@ -126,7 +118,8 @@ class OpenedSectionByCourseByInstructorListView(generics.ListAPIView):
             raise ValidationError("Provide query of at least 4 letters")
 
         queryset = queryset.filter(
-            Q(section__course__course_code__icontains=query) | Q(section__course__name__icontains=query)
+            Q(section__course__course_code__icontains=query)
+            | Q(section__course__name__icontains=query)
         )
 
         # prefetch related teach, instructors
@@ -141,9 +134,7 @@ class OpenedSectionByCourseByInstructorListView(generics.ListAPIView):
 
         # annotate the existence of related Meetings
         related_meetings = Meeting.objects.filter(opened_section=OuterRef("pk"))
-        queryset = queryset.annotate(
-            meetings_exist=Exists(related_meetings)
-        )
+        queryset = queryset.annotate(meetings_exist=Exists(related_meetings))
 
         return queryset
 
@@ -196,7 +187,7 @@ class SemestersListView(generics.ListAPIView):
         queryset = self.get_queryset()
         semester_codes = list(queryset.values_list("semester__code", flat=True))
         return Response(semester_codes)
-    
+
     def get(self, request, *args, **kwargs):
         try:
             return self.list(request, *args, **kwargs)
@@ -218,7 +209,7 @@ class DepartmentListView(generics.ListAPIView):
         if not institution_id:
             raise ValidationError('Missing "institution_id" query parameter')
         return super().get_queryset().filter(institution_id=institution_id)
-    
+
     def get(self, request, *args, **kwargs):
         try:
             return self.list(request, *args, **kwargs)
