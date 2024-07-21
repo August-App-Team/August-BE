@@ -49,7 +49,10 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
         write_only=True, queryset=Institution.objects.all(), source="institution"
     )
     department_id = serializers.PrimaryKeyRelatedField(
-        write_only=True, queryset=Department.objects.all(), source="department"
+        write_only=True,
+        queryset=Department.objects.all(),
+        source="department",
+        allow_null=True,
     )
 
     class Meta(UserDetailsSerializer.Meta):
