@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.core.exceptions import ValidationError
-from django.db.models import Prefetch, OuterRef, Exists
+from django.db.models import Prefetch, OuterRef, Exists, Q
 
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -110,32 +110,24 @@ class OpenedSectionListView(generics.ListAPIView):
 class OpenedSectionByCourseByInstructorListView(generics.ListAPIView):
     def get_queryset(self):
         semester_code = self.request.query_params.get("semester", None)
-        query_type = self.request.query_params.get("querytype", None)
         query = self.request.query_params.get("query", None)
         institution_id = self.request.query_params.get("institution_id", 1)
 
         if semester_code is None:
             raise ValidationError('Missing "semester" query parameter')
-        if query_type is None:
-            raise ValidationError('Missing "querytype" query parameter')
         if query is None:
             raise ValidationError('Missing "query" query parameter')
 
         queryset = OpenedSection.objects.filter(
             semester__code=semester_code, section__course__institution_id=institution_id
         ).select_related("section__course")
-        if query_type == "code":
-            if len(query) < 4:
-                raise ValidationError("Provide course code of at least 4 letters")
-            queryset = queryset.filter(section__course__course_code__icontains=query)
-        elif query_type == "name":
-            if len(query) < 4:
-                raise ValidationError("Provide course name of at least 4 letters")
-            queryset = queryset.filter(section__course__name__icontains=query)
-        else:
-            raise ValidationError(
-                'Invalid "querytype" query parameter. Acceptable values are "code", "name"'
-            )
+
+        if len(query) < 4:
+            raise ValidationError("Provide query of at least 4 letters")
+
+        queryset = queryset.filter(
+            Q(section__course__course_code__icontains=query) | Q(section__course__name__icontains=query)
+        )
 
         # prefetch related teach, instructors
         teach_set_prefetch = Prefetch(
