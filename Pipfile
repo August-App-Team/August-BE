@@ -17,6 +17,7 @@ djangorestframework-simplejwt = "*"
 pillow = "*"
 django-resized = "*"
 pillow-heif = "*"
+django-csp = "*"
 
 [dev-packages]
 django-debug-toolbar = "*"

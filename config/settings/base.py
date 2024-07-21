@@ -89,6 +89,9 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",  # allauth
 ]
 
+# Add CSP header
+MIDDLEWARE += ["csp.middleware.CSPMiddleware"]
+
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
