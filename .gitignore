@@ -2,6 +2,7 @@
 scrape_config.yaml
 test/
 run_gunicorn.sh
+apple_private_key.p8
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

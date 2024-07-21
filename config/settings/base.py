@@ -195,11 +195,11 @@ SOCIALACCOUNT_PROVIDERS = {
     "apple": {
         "APPS": [
             {
-                "client_id": str(get_secret("APPLE_BUNDLE_ID")) + "," + str(get_secret("APPLE_SERVICE_ID")),
+                "client_id": str(get_secret("APPLE_SERVICE_ID")) + "," + str(get_secret("APPLE_BUNDLE_ID")),
                 "secret": get_secret("APPLE_KEY_ID"),
                 "key": get_secret("APPLE_TEAM_ID"),
                 "settings": {
-                    "certificate_key": get_secret("APPLE_PRIVATE_KEY"),
+                    "certificate_key": open("apple_private_key.p8").read()
                 },
             },
         ]
