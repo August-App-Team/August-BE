@@ -117,3 +117,13 @@ class UserDetailsView(generics.RetrieveUpdateAPIView):
             return super().update(request, *args, **kwargs)
         except ValidationError as ve:
             return Response(data=dict(ve), status=status.HTTP_400_BAD_REQUEST)
+
+class SetDefaultProfileImageView(generics.CreateAPIView):
+    permission_classes = (IsAuthenticated, )
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        user.profile_image_file.name = get_user_model().DEFAULT_PROFILE_IMAGE
+        user.profile_image_url = ""
+        user.save()
+        return Response(status=status.HTTP_201_CREATED)
