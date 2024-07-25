@@ -31,6 +31,29 @@ class FriendListView(ListAPIView):
         return get_user_model().objects.filter(id__in=friend_ids)
 
 
+class FriendDeleteView(DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = FriendSerializer
+
+    def get_object(self):
+        user = self.request.user
+        friend_id = self.kwargs["friend_id"]
+
+        friend = Friend.objects.filter(
+            Q(user1=user, user2=friend_id) | Q(user1=friend_id, user2=user)
+        ).first()
+        if friend is not None:
+            return friend
+        else:
+            raise NotFound("Not a friend or invalid friend_id.")
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except NotFound as e:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+
 class FriendTimeTableSemesterList(ListAPIView):
     permission_classes = [IsAuthenticated]
 
@@ -90,21 +113,130 @@ class FriendTimeTableView(RetrieveAPIView):
             return Response({"detail": str(e)}, status=status.HTTP_403_FORBIDDEN)
 
 
-class GenerateRequestCodeView(APIView):  # resume here
+class FriendHangoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        friend_id = self.kwargs["friend_id"]
+        semester = self.kwargs["semester"]
+
+        if Friend.objects.filter(
+            Q(user1=user, user2=friend_id) | Q(user1=friend_id, user2=user)
+        ).exists():
+            # user and friend_id are friends
+            try:
+                timetable_friend = TimeTable.objects.get(
+                    user=friend_id, semester__code=semester, order=0
+                )
+                timetable_user = TimeTable.objects.get(
+                    user=user, semester__code=semester, order=0
+                )
+
+                # get the set of (day, start_time, end_time) of the OpenedSections that the user and friend are taking
+                meetings_user = timetable_user.opened_section_entries.values_list(
+                    "opened_section__meeting__day__day",
+                    "opened_section__meeting__duration__start_time",
+                    "opened_section__meeting__duration__end_time",
+                )
+
+                meetings_friend = timetable_friend.opened_section_entries.values_list(
+                    "opened_section__meeting__day__day",
+                    "opened_section__meeting__duration__start_time",
+                    "opened_section__meeting__duration__end_time",
+                )
+
+                hangout_intervals = get_hangout_intervals(
+                    meetings_user, meetings_friend
+                )
+
+                # remove hangout intervals that last lte 10 mins
+                hangout_intervals = [
+                    interval
+                    for interval in hangout_intervals
+                    if (
+                        (
+                            datetime.combine(date.today(), interval[2])
+                            - datetime.combine(date.today(), interval[1])
+                        ).seconds
+                        > 600
+                    )
+                ]
+
+                return Response(
+                    {
+                        "meetings": MeetingIntervalSerializer(
+                            hangout_intervals, many=True
+                        ).data
+                    }
+                )
+
+            except TimeTable.DoesNotExist:
+                return Response(
+                    {"detail": "No timetable exists for given user and semester."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+        else:
+            return Response(
+                {"detail": "Access only allowed to friend."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+
+class GenerateRequestCodeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        code = get_random_code(settings.FRIENDS["FRIEND_CODE_LENGTH"])
-        expires_at = timezone.now() + timezone.timedelta(
-            hours=settings.FRIENDS["FRIEND_CODE_EXPIRATION"]
-        )
-        friend_code = FriendCode(
-            code=code, expires_at=expires_at, generated_by=request.user
-        )
-        friend_code.save()
+        """
+        If the user has a valid code, extend the valid time and return the same code.
+        If the user doesn't have a valid code, generate a valid code and return the newly generated code.
+        """
+
+        (code, expires_at) = (None, None)
+        current_code = FriendCode.objects.filter(generated_by=request.user)
+        if current_code.exists():
+            friend_code = current_code.first()
+            # Check the valid time of the code. If the code is valid, extend the valid time.
+            if friend_code.expires_at >= timezone.now():
+                friend_code.expires_at = timezone.now() + timezone.timedelta(
+                    hours=settings.FRIENDS["FRIEND_CODE_EXPIRATION"]
+                )
+                friend_code.save()
+                (code, expires_at) = (friend_code.code, friend_code.expires_at)
+
+            # If the code is not valid, remove any existing code and generate a new code.
+            else:
+                current_code.delete()
+
+        if code is None:
+            rand_code = get_random_code(settings.FRIENDS["FRIEND_CODE_LENGTH"])
+            expires_at = timezone.now() + timezone.timedelta(
+                hours=settings.FRIENDS["FRIEND_CODE_EXPIRATION"]
+            )
+            friend_code = FriendCode(
+                code=rand_code, expires_at=expires_at, generated_by=request.user
+            )
+            friend_code.save()
+            (code, expires_at) = (friend_code.code, friend_code.expires_at)
+
         return Response(
             {"code": code, "expires_at": expires_at}, status=status.HTTP_201_CREATED
         )
+
+
+class RevokeRequestCodeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        """
+        Revoke the user's friend request code if any exist.
+        """
+        current_code = FriendCode.objects.filter(generated_by=request.user)
+        if current_code.exists():
+            current_code.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 class AcceptFriendRequestView(APIView):
@@ -140,79 +272,3 @@ class AcceptFriendRequestView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
-
-
-class FriendDeleteView(DestroyAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = FriendSerializer
-
-    def get_object(self):
-        user = self.request.user
-        friend_id = self.kwargs["friend_id"]
-
-        friend = Friend.objects.filter(
-            Q(user1=user, user2=friend_id) | Q(user1=friend_id, user2=user)
-        ).first()
-        if friend is not None:
-            return friend
-        else:
-            raise NotFound("Not a friend or invalid friend_id.")
-
-    def delete(self, request, *args, **kwargs):
-        try:
-            return super().destroy(request, *args, **kwargs)
-        except NotFound as e:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-class FriendHangoutView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        friend_id = self.kwargs["friend_id"]
-        semester = self.kwargs["semester"]
-
-        if Friend.objects.filter(
-            Q(user1=user, user2=friend_id) | Q(user1=friend_id, user2=user)
-        ).exists():
-            # user and friend_id are friends
-            try:
-                timetable_friend = TimeTable.objects.get(
-                    user=friend_id, semester__code=semester, order=0
-                )
-                timetable_user = TimeTable.objects.get(
-                    user=user, semester__code=semester, order=0
-                )
-
-                # get the set of (day, start_time, end_time) of the OpenedSections that the user and friend are taking
-                meetings_user = timetable_user.opened_section_entries.values_list(
-                    "opened_section__meeting__day__day",
-                    "opened_section__meeting__duration__start_time",
-                    "opened_section__meeting__duration__end_time",
-                )
-
-                meetings_friend = timetable_friend.opened_section_entries.values_list(
-                    "opened_section__meeting__day__day",
-                    "opened_section__meeting__duration__start_time",
-                    "opened_section__meeting__duration__end_time",
-                )
-
-                hangout_intervals = get_hangout_intervals(meetings_user, meetings_friend)
-
-                # remove hangout intervals that last lte 10 mins
-                hangout_intervals = [
-                    interval
-                    for interval in hangout_intervals
-                    if ((datetime.combine(date.today(), interval[2]) - datetime.combine(date.today(), interval[1])).seconds > 600)
-                ]
-
-                return Response(
-                    {
-                        "meetings": MeetingIntervalSerializer(hangout_intervals, many=True).data
-                    }
-                )
-
-            except TimeTable.DoesNotExist:
-                return Response({"detail": "No timetable exists for given user and semester."}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            return Response({"detail": "Access only allowed to friend."}, status=status.HTTP_403_FORBIDDEN)
