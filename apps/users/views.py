@@ -119,11 +119,18 @@ class UserDetailsView(generics.RetrieveUpdateAPIView):
             return Response(data=dict(ve), status=status.HTTP_400_BAD_REQUEST)
 
 class SetDefaultProfileImageView(generics.CreateAPIView):
+    class UserProfileImageSerializer(CustomUserDetailsSerializer):
+        class Meta(CustomUserDetailsSerializer.Meta):
+            fields = ("profile_image", )
+            read_only_fields = ("profile_image",)
+
     permission_classes = (IsAuthenticated, )
+    serializer_class = UserProfileImageSerializer
 
     def post(self, request, *args, **kwargs):
         user = request.user
         user.profile_image_file.name = get_user_model().DEFAULT_PROFILE_IMAGE
         user.profile_image_url = ""
         user.save()
-        return Response(status=status.HTTP_201_CREATED)
+        serializer = self.get_serializer(instance=user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
