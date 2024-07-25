@@ -145,6 +145,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         if self.profile_image_url is None:
             # Case: No profile_image_url provided. -> Set profile_image_url to empty string and use default profile image.
             self.profile_image_url = ""
+        
+        # When user registers with social provider that gives profile image URL, remove profile_image_file
+        if self.profile_image_url:
+            self.profile_image_file = None
+        
         super().save(*args, **kwargs)
 
     @property
