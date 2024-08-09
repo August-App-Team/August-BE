@@ -8,6 +8,7 @@ from apps.users.views import (
     GoogleLoginView,
     GoogleLoginCallbackView,
     GoogleLoginiOSCallbackView,
+    LogoutDeleteView,
     SetDefaultProfileImageView,
     UserView,
     UserDetailsView,
@@ -40,4 +41,5 @@ urlpatterns = [
     path("<int:pk>/", UserView.as_view(), name="user_detail"),
     path("me/", UserDetailsView.as_view(), name="user_detail_logged_in"),
     path("me/profile-image/reset/", SetDefaultProfileImageView.as_view(), name="reset_profile_image"),
+    path("me/delete/", LogoutDeleteView.as_view(), name="user_delete"),
 ]

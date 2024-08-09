@@ -12,6 +12,7 @@ from allauth.socialaccount.providers.apple.views import AppleOAuth2Adapter
 from allauth.socialaccount.providers.apple.client import AppleOAuth2Client
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
+from dj_rest_auth.views import LogoutView
 
 from apps.users.oauth2_adapters import (
     GoogleAndroidOAuth2Adapter,
@@ -98,6 +99,19 @@ class UserView(generics.RetrieveUpdateAPIView):
             return Response(data=dict(ve), status=status.HTTP_400_BAD_REQUEST)
 
 
+class LogoutDeleteView(LogoutView):
+    permission_classes = (IsAuthenticated,)
+
+    def logout(self, request):
+        user = request.user
+        response = super().logout(request)
+        user.delete()
+        response.status_code = status.HTTP_204_NO_CONTENT
+        response.data = {"detail": "Successfully logged out and deleted user."}
+
+        return response
+
+
 class UserDetailsView(generics.RetrieveUpdateAPIView):
     serializer_class = CustomUserDetailsSerializer
     permission_classes = (IsAuthenticated,)
@@ -118,13 +132,14 @@ class UserDetailsView(generics.RetrieveUpdateAPIView):
         except ValidationError as ve:
             return Response(data=dict(ve), status=status.HTTP_400_BAD_REQUEST)
 
+
 class SetDefaultProfileImageView(generics.CreateAPIView):
     class UserProfileImageSerializer(CustomUserDetailsSerializer):
         class Meta(CustomUserDetailsSerializer.Meta):
-            fields = ("profile_image", )
+            fields = ("profile_image",)
             read_only_fields = ("profile_image",)
 
-    permission_classes = (IsAuthenticated, )
+    permission_classes = (IsAuthenticated,)
     serializer_class = UserProfileImageSerializer
 
     def post(self, request, *args, **kwargs):
