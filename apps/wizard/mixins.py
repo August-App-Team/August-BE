@@ -86,7 +86,6 @@ class GenerateTimeTableMixin:
                 [
                     self._overlap(timeslots, table_timeslots),
                     self._too_short_interval(timeslots, table_timeslots),
-                    self._too_long_interval(timeslots, table_timeslots),
                 ]
             ):
                 return False
@@ -149,42 +148,6 @@ class GenerateTimeTableMixin:
                     datetime.today(), after[1]
                 ) - datetime.combine(datetime.today(), before[2])
                 if interval < min_interval:
-                    return True
-
-        return False
-
-    def _too_long_interval(
-        self,
-        timeslots1: tuple[tuple[str, datetime.time, datetime.time]],
-        timeslots2: tuple[tuple[str, datetime.time, datetime.time]],
-    ):
-        """
-        Returns True if the interval between the two timeslots is too long.
-
-        :param timeslots1: A tuple of timeslots
-        :param timeslots2: A tuple of timeslots
-        """
-
-        max_interval = self._options["maximum_interval"]
-        if max_interval is None:
-            return False
-
-        for ts1 in timeslots1:
-            for ts2 in timeslots2:
-                day1, start1, _ = ts1
-                day2, start2, _ = ts2
-
-                if day1 != day2:
-                    continue
-
-                before = ts1 if start1 < start2 else ts2
-                after = ts1 if before == ts2 else ts2
-
-                # interval := start time of after - end time of before
-                interval = datetime.combine(
-                    datetime.today(), after[1]
-                ) - datetime.combine(datetime.today(), before[2])
-                if interval > max_interval:
                     return True
 
         return False
@@ -299,6 +262,8 @@ class GenerateTimeTableMixin:
             self.exclude_early_classes()
 
         self.generate_timetables()
+        if self._options["maximum_interval"] is not None:
+            self.exclude_too_long_interval_tables()
 
         # the number of possible timetables := sum(product(len(op_secs) for timetable in generated_timetables for op_secs in timetable.values()))
         return sum(
@@ -325,9 +290,65 @@ class GenerateTimeTableMixin:
             self.exclude_early_classes()
 
         self.generate_timetables()
+        if self._options["maximum_interval"] is not None:
+            self.exclude_too_long_interval_tables()
+
         self.realize_timetables()
 
         return self.realized_timetables
+
+    def exclude_too_long_interval_tables(self):
+        if (
+            self.generated_timetables is None
+            or self._options["maximum_interval"] is None
+        ):
+            return
+
+        timetable_keepers = []
+        for timetable in self.generated_timetables:
+            section_slots = timetable.keys()
+            # flatten to a list of timeslots - timeslot is a tuple[day, start_time, end_time]
+            timeslots = [
+                timeslot for section_slot in section_slots for timeslot in section_slot
+            ]
+            max_interval = self._get_max_interval(timeslots)
+            if max_interval > self._options["maximum_interval"]:
+                continue
+            timetable_keepers.append(timetable)
+
+        self.generated_timetables = timetable_keepers
+
+    def _get_max_interval(
+        self, meetings: list[tuple[str, datetime.time, datetime.time]]
+    ):
+        day_to_meetings = {
+            "M": set(),
+            "Tu": set(),
+            "W": set(),
+            "Th": set(),
+            "F": set(),
+        }
+        max_interval = timedelta(hours=0)
+
+        for meeting in meetings:
+            day = meeting[0]
+            if day not in day_to_meetings:
+                continue
+            day_to_meetings[day].add(meeting)
+
+        for day in day_to_meetings:
+            meetings = sorted(day_to_meetings[day], key=lambda x: x[1])
+            for i in range(len(meetings) - 1):
+                prev = meetings[i]
+                next = meetings[i + 1]
+
+                interval = datetime.combine(
+                    datetime.today(), next[1]
+                ) - datetime.combine(datetime.today(), prev[2])
+                if interval > max_interval:
+                    max_interval = interval
+
+        return max_interval
 
     def realize_timetables(self):
         """
