@@ -24,14 +24,31 @@ DATABASES = {
     }
 }
 
-STATIC_URL = '/static/'
-STATIC_ROOT = '/var/www/augustapp.one/static/'
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = '/var/www/augustapp.one/media/'
+STORAGES = {
+    'default' : {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "location": "media",
+        }
+    },
+    'staticfiles': {
+        "BACKEND": "storages.backends.s3.S3Storage",
+    }
+}
+AWS_STORAGE_BUCKET_NAME = get_secret('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_FILE_OVERWRITE = False
+AWS_IS_GZIPPED = True
+AWS_S3_REGION_NAME = 'us-east-1'
+AWS_S3_ACCESS_KEY_ID = get_secret('AWS_S3_ACCESS_KEY_ID')
+AWS_S3_SECRET_ACCESS_KEY = get_secret('AWS_S3_SECRET_ACCESS_KEY')
+AWS_QUERYSTRING_AUTH = False
 
 DJANGO_APPS += [
     'django.contrib.staticfiles'
+]
+
+THIRD_PARTY_APPS += [
+    'storages',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

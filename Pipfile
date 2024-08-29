@@ -18,6 +18,7 @@ pillow = "*"
 django-resized = "*"
 pillow-heif = "*"
 django-csp = "*"
+django-storages = {extras = ["s3"], version = "*"}
 
 [dev-packages]
 django-debug-toolbar = "*"

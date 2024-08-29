@@ -238,3 +238,5 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+CSP_DEFAULT_SRC = ["'self'", f"https://{get_secret('AWS_STORAGE_BUCKET_NAME')}.s3.amazonaws.com",]
