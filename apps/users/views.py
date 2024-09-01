@@ -14,11 +14,6 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from dj_rest_auth.views import LogoutView
 
-from apps.users.oauth2_adapters import (
-    GoogleAndroidOAuth2Adapter,
-    GoogleWebOAuth2Adapter,
-    GoogleiOSOAuth2Adapter,
-)
 from apps.users.permissions import IsHimselfOrAdmin
 from apps.users.serializers import CustomUserDetailsSerializer, FullUserSerializer
 from config.settings.base import get_secret
@@ -34,9 +29,9 @@ class GoogleLoginView(APIView):
         return redirect(url)
 
 
-# use authorization code grant - one that receives 'code' from client (web app)
+# Callback view for both authorization code grant and implicit grant
 class GoogleLoginCallbackView(SocialLoginView):
-    adapter_class = GoogleWebOAuth2Adapter
+    adapter_class = GoogleOAuth2Adapter
     callback_url = get_secret("DEPLOY_HOST_PORT") + "/users/google/login/callback/"
     client_class = OAuth2Client
 
@@ -49,16 +44,6 @@ class GoogleLoginCallbackView(SocialLoginView):
         self.request.data.update({"code": code})
 
         return self.post(request, args, kwargs)
-
-
-# to use implicit grant - one that receives 'access_token' from client app
-class GoogleLoginiOSCallbackView(SocialLoginView):
-    adapter_class = GoogleiOSOAuth2Adapter
-
-
-# implicit grant
-class GoogleLoginAndroidCallbackView(SocialLoginView):
-    adapter_class = GoogleAndroidOAuth2Adapter
 
 
 class AppleLoginCallbackView(SocialLoginView):

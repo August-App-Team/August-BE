@@ -3,11 +3,8 @@ from django.urls import path
 from apps.users.views import (
     AppleLoginCallbackView,
     CheckRegisteredView,
-    GoogleLoginAndroidCallbackView,
-    GoogleLoginAndroidCallbackView,
     GoogleLoginView,
     GoogleLoginCallbackView,
-    GoogleLoginiOSCallbackView,
     LogoutDeleteView,
     SetDefaultProfileImageView,
     UserView,
@@ -21,16 +18,6 @@ urlpatterns = [
         "google/login/callback/",
         GoogleLoginCallbackView.as_view(),
         name="google_login_callback",
-    ),
-    path(
-        "google/login/callback/ios/",
-        GoogleLoginiOSCallbackView.as_view(),
-        name="google_login_ios_callback",
-    ),
-    path(
-        "google/login/callback/android/",
-        GoogleLoginAndroidCallbackView.as_view(),
-        name="google_login_android_callback",
     ),
     path(
         "apple/login/callback/",
