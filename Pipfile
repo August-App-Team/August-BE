@@ -7,7 +7,7 @@ name = "pypi"
 django = "~=5.0"
 djangorestframework = "*"
 geopy = "*"
-psycopg2 = "*"
+psycopg2-binary = "*"
 gunicorn = "*"
 beautifulsoup4 = "*"
 pyyaml = "*"
@@ -19,6 +19,7 @@ django-resized = "*"
 pillow-heif = "*"
 django-csp = "*"
 django-storages = {extras = ["s3"], version = "*"}
+redis = "*"
 
 [dev-packages]
 django-debug-toolbar = "*"

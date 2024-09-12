@@ -239,4 +239,14 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
-CSP_DEFAULT_SRC = ["'self'", f"https://{get_secret('AWS_STORAGE_BUCKET_NAME')}.s3.amazonaws.com",]
+CSP_DEFAULT_SRC = [
+    "'self'",
+    f"https://{get_secret('AWS_STORAGE_BUCKET_NAME')}.s3.amazonaws.com",
+]
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379",
+    }
+}
