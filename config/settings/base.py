@@ -65,6 +65,8 @@ THIRD_PARTY_APPS = [
     # django-allauth providers
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.apple",
+    # etc
+    "django_user_agents",
 ]
 
 LOCAL_APPS = [
@@ -74,6 +76,7 @@ LOCAL_APPS = [
     "users",
     "timetables",
     "friends",
+    "misc",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -198,12 +201,12 @@ SOCIALACCOUNT_PROVIDERS = {
     "apple": {
         "APPS": [
             {
-                "client_id": str(get_secret("APPLE_SERVICE_ID")) + "," + str(get_secret("APPLE_BUNDLE_ID")),
+                "client_id": str(get_secret("APPLE_SERVICE_ID"))
+                + ","
+                + str(get_secret("APPLE_BUNDLE_ID")),
                 "secret": get_secret("APPLE_KEY_ID"),
                 "key": get_secret("APPLE_TEAM_ID"),
-                "settings": {
-                    "certificate_key": open("apple_private_key.p8").read()
-                },
+                "settings": {"certificate_key": open("apple_private_key.p8").read()},
             },
         ]
     },
@@ -250,3 +253,5 @@ CACHES = {
         "LOCATION": "redis://127.0.0.1:6379",
     }
 }
+
+USER_AGENTS_CACHE = "default"

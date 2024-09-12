@@ -19,6 +19,9 @@ django-resized = "*"
 pillow-heif = "*"
 django-csp = "*"
 django-storages = {extras = ["s3"], version = "*"}
+ua-parser = "*"
+user-agents = "*"
+django-user-agents = "*"
 redis = "*"
 
 [dev-packages]

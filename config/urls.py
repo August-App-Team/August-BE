@@ -26,6 +26,7 @@ from apps.courses.views import (
     SemestersListView,
     InstitutionListView,
 )
+from apps.misc.views import redirect_to_app_store_view
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -41,6 +42,7 @@ urlpatterns = [
     path("users/", include("users.urls")),
     path("timetables/", include("timetables.urls")),
     path("friends/", include("friends.urls")),
+    path("get/", redirect_to_app_store_view, name="redirect-to-app-store"),
 ]
 
 if settings.DEBUG:
@@ -48,4 +50,3 @@ if settings.DEBUG:
         path("__debug__/", include("debug_toolbar.urls")),
     ] + urlpatterns
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
