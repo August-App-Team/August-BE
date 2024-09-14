@@ -7,3 +7,11 @@ class AppStoreLink(models.Model):
 
     def __str__(self):
         return f"{self.platform}: {self.link}"
+
+
+class MinSupportedVersion(models.Model):
+    platform = models.CharField(max_length=10, unique=True)
+    version = models.CharField(max_length=10)
+
+    def __str__(self):
+        return f"{self.platform}: {self.version}"

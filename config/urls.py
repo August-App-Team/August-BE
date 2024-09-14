@@ -43,6 +43,7 @@ urlpatterns = [
     path("timetables/", include("timetables.urls")),
     path("friends/", include("friends.urls")),
     path("get/", redirect_to_app_store_view, name="redirect-to-app-store"),
+    path("misc/", include("misc.urls")),
 ]
 
 if settings.DEBUG:
