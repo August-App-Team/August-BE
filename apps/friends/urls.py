@@ -20,6 +20,11 @@ urlpatterns = [
         name="friend-hangout",
     ),
     path(
+        "hangout/",
+        views.FriendGroupHangoutView.as_view(),
+        name="friend-timetable-add",
+    ),
+    path(
         "new-request-code/",
         views.GenerateRequestCodeView.as_view(),
         name="generate-request-code",

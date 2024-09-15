@@ -167,16 +167,72 @@ class FriendHangoutView(APIView):
             )
 
 
-            except TimeTable.DoesNotExist:
-                return Response(
-                    {"detail": "No timetable exists for given user and semester."},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-        else:
+class FriendGroupHangoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        friend_ids = self.request.query_params.get("friends", None)
+        semester = self.request.query_params.get("semester", None)
+
+        if semester is None:
+            return Response(
+                {"detail": "Query parameter semester is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if friend_ids is None:
+            return Response(
+                {"detail": "Query parameter friend_ids is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            friend_ids = [int(friend_id) for friend_id in friend_ids.split(",")]
+        except ValueError:
+            return Response(
+                {
+                    "detail": "Query parameter friend_ids must be a comma-separated list of integers."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not all(
+            Friend.objects.filter(
+                Q(user1=user, user2=friend_id) | Q(user1=friend_id, user2=user)
+            ).exists()
+            for friend_id in friend_ids
+        ):
             return Response(
                 {"detail": "Access only allowed to friend."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+
+        user_and_friend_ids = friend_ids + [user.id]
+        try:
+            hangout_intervals = get_hangout_intervals_of_users(
+                semester, user_and_friend_ids
+            )
+        except ValueError as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # remove hangout intervals that last lte 10 mins
+        hangout_intervals = [
+            interval
+            for interval in hangout_intervals
+            if (
+                (
+                    datetime.combine(date.today(), interval[2])
+                    - datetime.combine(date.today(), interval[1])
+                ).seconds
+                > 600
+            )
+        ]
+
+        return Response(
+            {"meetings": MeetingIntervalSerializer(hangout_intervals, many=True).data}
+        )
 
 
 class GenerateRequestCodeView(APIView):
