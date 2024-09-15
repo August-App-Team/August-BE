@@ -2,6 +2,8 @@ from datetime import time
 import random
 import string
 
+from apps.timetables.models import TimeTable
+
 
 def get_random_code(length: int = 8) -> str:
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
@@ -15,17 +17,18 @@ def is_valid_code(code: str, length: int = 8) -> bool:
         Given two sets of meetings, return the set of intervals where two people are both free
 
     inputs:
-        - meetings1: set[tuple[str, time, time]] - a set of meetings for the first person
-        - meetings2: set[tuple[str, time, time]] - a set of meetings for the second person
+        - *meetings: each argument is expected to be a set of meeting tuples - (day of week, start time, end time) (set[tuple[str, time, time]])
 
     output:
         - list[tuple[str, time, time]] - a list of intervals where two people are both available
 """
-def get_hangout_intervals(meetings1: set[tuple[str, time, time]], meetings2: set[tuple[str, time, time]]) -> list[tuple[str, time, time]]:
-    # union the two meetings
-    meetings = meetings1.union(meetings2)
+def get_hangout_intervals(*meetings: set[tuple[str, time, time]]) -> list[tuple[str, time, time]]:
+    # union all the meetings
+    all_meetings = set()
+    for meeting_set in meetings:
+        all_meetings = all_meetings.union(meeting_set)
 
-    # divide the meetings by day of week(Mon, Tue, ..., Fri)
+    # divide the meetings by day of week (Mon, Tue, ..., Fri)
     meetings_by_day = {
         "M": set(),
         "Tu": set(),
@@ -33,7 +36,7 @@ def get_hangout_intervals(meetings1: set[tuple[str, time, time]], meetings2: set
         "Th": set(),
         "F": set(),
     }
-    for meeting in meetings:
+    for meeting in all_meetings:
         day = meeting[0]
         if day not in meetings_by_day:
             continue
@@ -107,3 +110,21 @@ def coalesce_overlapping_intervals(intervals_of_day: set[tuple[str, time, time]]
         coalesced_intervals.append(intervals[-1])
     
     return coalesced_intervals
+
+def get_hangout_intervals_of_users(semester: str, user_ids: list[int]) -> list[tuple[str, time, time]]:
+    # get the timetables of the users
+    timetables = TimeTable.objects.filter(user__in=user_ids, semester__code=semester, order=0)
+    if timetables.count() != len(user_ids):
+        raise ValueError("Some users do not have a timetable for the given semester")
+    
+    meetings = set()
+    for timetable in timetables:
+        meetings.update(
+                timetable.opened_section_entries.values_list(
+                    "opened_section__meeting__day__day",
+                    "opened_section__meeting__duration__start_time",
+                    "opened_section__meeting__duration__end_time",
+                )
+            )
+
+    return get_hangout_intervals(meetings)
