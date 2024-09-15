@@ -23,6 +23,7 @@ ua-parser = "*"
 user-agents = "*"
 django-user-agents = "*"
 redis = "*"
+django-allauth = {extras = ["socialaccount"], version = "*"}
 
 [dev-packages]
 django-debug-toolbar = "*"
