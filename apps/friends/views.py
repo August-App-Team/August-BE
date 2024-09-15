@@ -11,7 +11,11 @@ from rest_framework.response import Response
 
 from apps.friends.models import Friend, FriendCode
 from apps.friends.serializers import FriendSerializer, MeetingIntervalSerializer
-from apps.friends.utils import get_hangout_intervals, get_random_code, is_valid_code
+from apps.friends.utils import (
+    get_hangout_intervals_of_users,
+    get_random_code,
+    is_valid_code,
+)
 from apps.timetables.models import TimeTable
 from apps.timetables.serializers import TimeTableSerializer
 from rest_framework.exceptions import NotFound, PermissionDenied
@@ -126,50 +130,42 @@ class FriendHangoutView(APIView):
         ).exists():
             # user and friend_id are friends
             try:
-                timetable_friend = TimeTable.objects.get(
-                    user=friend_id, semester__code=semester, order=0
+                hangout_intervals = get_hangout_intervals_of_users(
+                    semester, [user.id, friend_id]
                 )
-                timetable_user = TimeTable.objects.get(
-                    user=user, semester__code=semester, order=0
-                )
-
-                # get the set of (day, start_time, end_time) of the OpenedSections that the user and friend are taking
-                meetings_user = timetable_user.opened_section_entries.values_list(
-                    "opened_section__meeting__day__day",
-                    "opened_section__meeting__duration__start_time",
-                    "opened_section__meeting__duration__end_time",
-                )
-
-                meetings_friend = timetable_friend.opened_section_entries.values_list(
-                    "opened_section__meeting__day__day",
-                    "opened_section__meeting__duration__start_time",
-                    "opened_section__meeting__duration__end_time",
-                )
-
-                hangout_intervals = get_hangout_intervals(
-                    meetings_user, meetings_friend
-                )
-
-                # remove hangout intervals that last lte 10 mins
-                hangout_intervals = [
-                    interval
-                    for interval in hangout_intervals
-                    if (
-                        (
-                            datetime.combine(date.today(), interval[2])
-                            - datetime.combine(date.today(), interval[1])
-                        ).seconds
-                        > 600
-                    )
-                ]
-
+            except ValueError as e:
                 return Response(
-                    {
-                        "meetings": MeetingIntervalSerializer(
-                            hangout_intervals, many=True
-                        ).data
-                    }
+                    {"detail": str(e)},
+                    status=status.HTTP_404_NOT_FOUND,
                 )
+
+            # remove hangout intervals that last lte 10 mins
+            hangout_intervals = [
+                interval
+                for interval in hangout_intervals
+                if (
+                    (
+                        datetime.combine(date.today(), interval[2])
+                        - datetime.combine(date.today(), interval[1])
+                    ).seconds
+                    > 600
+                )
+            ]
+
+            return Response(
+                {
+                    "meetings": MeetingIntervalSerializer(
+                        hangout_intervals, many=True
+                    ).data
+                }
+            )
+
+        else:
+            return Response(
+                {"detail": "Access only allowed to friend."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
 
             except TimeTable.DoesNotExist:
                 return Response(
