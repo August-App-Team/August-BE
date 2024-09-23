@@ -66,6 +66,7 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
             "profile_image",
             "year_in_school",
             "date_joined",
+            "is_staff",
         ]
         fields = ("id", *extra_fields)
         read_only_fields = ("email", "institution", "department", "date_joined")
@@ -73,6 +74,17 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
 
 
 class FullUserSerializer(serializers.ModelSerializer):
+    profile_image = ImageOrUrlField()
+    institution_id = serializers.PrimaryKeyRelatedField(
+        write_only=True, queryset=Institution.objects.all(), source="institution"
+    )
+    department_id = serializers.PrimaryKeyRelatedField(
+        write_only=True,
+        queryset=Department.objects.all(),
+        source="department",
+        allow_null=True,
+    )
+
     class Meta:
         model = User
         fields = (
@@ -81,10 +93,13 @@ class FullUserSerializer(serializers.ModelSerializer):
             "is_active",
             "is_staff",
             "institution",
+            "institution_id",
             "department",
+            "department_id",
             "name",
             "profile_image",
             "year_in_school",
             "date_joined",
         )
-        read_only_fields = ("email", "date_joined")
+        read_only_fields = ("email", "institution", "department", "date_joined")
+        depth = 1
