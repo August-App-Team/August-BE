@@ -179,11 +179,13 @@ class SemestersListView(generics.ListAPIView):
         institution_id = self.request.query_params.get("institution_id")
         if not institution_id:
             raise ValidationError('Missing "institution_id" query parameter')
-        return Semester.objects.all() # TEMP
+        return InstitutionSupportedSemester.objects.filter(
+            institution_id=institution_id
+        )
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        semester_codes = list(queryset.values_list("code", flat=True)) # TEMP
+        semester_codes = list(queryset.values_list("semester__code", flat=True))
         return Response(semester_codes)
 
     def get(self, request, *args, **kwargs):
