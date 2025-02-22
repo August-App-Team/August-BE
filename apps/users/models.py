@@ -67,6 +67,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=255, unique=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False, help_text="Email verification status")
     institution = models.ForeignKey(
         "courses.Institution", on_delete=models.DO_NOTHING, blank=True, null=True
     )

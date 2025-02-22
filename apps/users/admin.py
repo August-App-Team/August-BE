@@ -67,8 +67,8 @@ class UserAdmin(BaseUserAdmin):
     # The fields to be used in displaying the User model.
     # These override the definitions on the base UserAdmin
     # that reference specific fields on auth.User.
-    list_display = ["id", "email", "is_staff", "name", "institution"]
-    list_filter = ["is_staff", "institution"]
+    list_display = ["id", "email", "is_staff", "name", "institution", "is_verified"]
+    list_filter = ["is_staff", "institution", "is_verified"]
     fieldsets = [
         (
             None,
@@ -94,7 +94,7 @@ class UserAdmin(BaseUserAdmin):
                 ]
             },
         ),
-        ("Permissions", {"fields": ["is_staff"]}),
+        ("Permissions", {"fields": ["is_staff", "is_verified"]}),
     ]
     # add_fieldsets is not a standard ModelAdmin attribute. UserAdmin
     # overrides get_fieldsets to use this attribute when creating a user.

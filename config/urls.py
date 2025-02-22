@@ -44,6 +44,7 @@ urlpatterns = [
     path("friends/", include("friends.urls")),
     path("get/", redirect_to_app_store_view, name="redirect-to-app-store"),
     path("misc/", include("misc.urls")),
+    path("community/", include("community.urls")),
 ]
 
 if settings.DEBUG:
