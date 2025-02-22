@@ -67,6 +67,7 @@ THIRD_PARTY_APPS = [
     "allauth.socialaccount.providers.apple",
     # etc
     "django_user_agents",
+    "corsheaders",
 ]
 
 LOCAL_APPS = [
@@ -83,6 +84,7 @@ LOCAL_APPS = [
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -179,7 +181,7 @@ AUTH_USER_MODEL = "users.User"  # custom user model
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_LOGIN_METHODS = {"email"}
 
 ACCOUNT_EMAIL_VERIFICATION = "none"
 

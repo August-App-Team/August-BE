@@ -56,3 +56,10 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 CSRF_TRUSTED_ORIGINS = [
     'https://augustapp.one',
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "https://augustapp.one",
+]
+
+CORS_ALLOW_CREDENTIALS = True
