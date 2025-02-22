@@ -22,7 +22,7 @@ from config.settings.base import get_secret
 class GoogleLoginView(APIView):
     def get(self, request, *args, **kwargs):
         client_id = get_secret("GOOGLE_WEB_CLIENT_ID")
-        redirect_uri = "http://127.0.0.1:8000" + "/users/google/login/callback/"
+        redirect_uri = get_secret("DEPLOY_HOST_PORT") + "/users/google/login/callback/"
         response_type = "code"
         scope = "profile%20email"
         url = f"https://accounts.google.com/o/oauth2/v2/auth?client_id={client_id}&redirect_uri={redirect_uri}&response_type={response_type}&scope={scope}"
@@ -32,7 +32,7 @@ class GoogleLoginView(APIView):
 # Callback view for both authorization code grant and implicit grant
 class GoogleLoginCallbackView(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
-    callback_url = "http://127.0.0.1:8000" + "/users/google/login/callback/"
+    callback_url = get_secret("DEPLOY_HOST_PORT") + "/users/google/login/callback/"
     client_class = OAuth2Client
 
     def get(self, request, *args, **kwargs):
