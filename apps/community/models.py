@@ -2,8 +2,11 @@ from django.db import models
 from django.conf import settings
 from django.db.models import Q, CheckConstraint, UniqueConstraint
 
+from apps.courses.models import Institution
+
 
 class Board(models.Model):
+    institution = models.ForeignKey(Institution, on_delete=models.CASCADE, related_name="boards")
     name = models.CharField(max_length=255, unique=True)
     is_anonymous = models.BooleanField(default=False)
     description = models.TextField()
