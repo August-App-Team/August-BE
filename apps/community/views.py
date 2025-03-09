@@ -1,10 +1,10 @@
-from rest_framework import generics
+from rest_framework import generics, mixins
 from rest_framework.permissions import AllowAny
 
-from apps.community.models import Board, Comment, Post
+from apps.community.models import Board, Comment, Post, PostReaction, Report
 from apps.community.pagination import StandardPageNumberPagination
 from apps.community.permissions import IsAuthorOrAdmin, IsVerifiedAndInstitutionAssociated
-from apps.community.serializers import BoardSerializer, CommentSerializer, PostSerializer, ReportSerializer
+from apps.community.serializers import BoardSerializer, CommentSerializer, PostReactionSerializer, PostSerializer, ReportSerializer
 
 # --- Board Views ---
 class BoardListCreateView(generics.ListCreateAPIView):
@@ -44,10 +44,22 @@ class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
         return [IsVerifiedAndInstitutionAssociated()]
 
 # --- Post Reaction ---
-class PostReactionView(generics.CreateAPIView):
-    serializer_class = PostSerializer
-    permission_classes = [IsVerifiedAndInstitutionAssociated]
+class PostReactionView(mixins.DestroyModelMixin, generics.CreateAPIView):
+    queryset = PostReaction.objects.all()
+    serializer_class = PostReactionSerializer
+    lookup_field = "post_id"
+    
+    def get_permissions(self):
+        if self.request.method == "DELETE":
+            return [IsAuthorOrAdmin()]
+        return [IsVerifiedAndInstitutionAssociated()]
+    
+    def get_queryset(self):
+        return super().get_queryset().filter(user=self.request.user)
 
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
+    
 # --- Comment Views ---
 class CommentListCreateView(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
@@ -74,11 +86,27 @@ class CommentReplyView(generics.CreateAPIView):
     permission_classes = [IsVerifiedAndInstitutionAssociated]
 
 # --- Report Views ---
-class ReportPostView(generics.CreateAPIView):
+class ReportPostView(mixins.DestroyModelMixin, generics.CreateAPIView):
+    queryset = Report.objects.all()
     serializer_class = ReportSerializer
     permission_classes = [IsVerifiedAndInstitutionAssociated]
+    lookup_field = "post_id"
+
+    def get_queryset(self):
+        return super().get_queryset().filter(user=self.request.user)
+    
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
 
 
-class ReportCommentView(generics.CreateAPIView):
+class ReportCommentView(mixins.DestroyModelMixin, generics.CreateAPIView):
+    queryset = Report.objects.all()
     serializer_class = ReportSerializer
     permission_classes = [IsVerifiedAndInstitutionAssociated]
+    lookup_field = "comment_id"
+
+    def get_queryset(self):
+        return super().get_queryset().filter(user=self.request.user)
+    
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)

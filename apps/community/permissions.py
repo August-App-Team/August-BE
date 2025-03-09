@@ -12,8 +12,12 @@ class IsAuthorOrAdmin(permissions.BasePermission):
             return True
         
         # Allow edit/delete only if the user is the author or an admin
+        obj_owner = getattr(obj, "author", None)
+        if not obj_owner:
+            obj_owner = getattr(obj, "user", None)
+
         return request.user and request.user.is_authenticated and (
-            obj.author == request.user or request.user.is_staff
+            obj_owner == request.user or request.user.is_staff
         )
     
 from .models import Board, Post, Comment
