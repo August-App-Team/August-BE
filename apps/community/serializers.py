@@ -50,10 +50,18 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ["id", "board", "author", "content", "tag", "tag_id", "created_at", "updated_at", "reaction_score", "is_quarantined"]
-        read_only_fields = ["author", "tag", "created_at", "updated_at", "reaction_score", "is_quarantined"]
+        read_only_fields = ["board", "author", "tag", "created_at", "updated_at", "reaction_score", "is_quarantined"]
 
     def get_reaction_score(self, obj):
         return obj.reaction_score
+    
+    def validate(self, attrs):
+        # Ensure that the board exists
+        if self.context["view"].kwargs.get("board_id"):
+            board_id = self.context["view"].kwargs["board_id"]
+            board = get_object_or_404(Board, id=board_id)
+            attrs["board"] = board
+        return attrs
     
     def create(self, validated_data):
         # Set the author to the user making the request
