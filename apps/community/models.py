@@ -118,4 +118,4 @@ class Report(models.Model):
                 self.comment.save()
 
     def __str__(self):
-        return f"Report by {self.user.name} on {'Post' if self.post else 'Comment'} {self.post.id or self.comment.id}"
+        return f"Report by user {self.user.id} on {'post' if self.post else 'comment'} {self.post.id if self.post else self.comment.id}"

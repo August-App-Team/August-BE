@@ -20,7 +20,7 @@ class IsAuthorOrAdmin(permissions.BasePermission):
             obj_owner == request.user or request.user.is_staff
         )
     
-from .models import Board, Post, Comment
+from .models import Board, Post, Comment, Report
 
 class IsVerifiedAndInstitutionAssociated(permissions.BasePermission):
     """
@@ -69,17 +69,20 @@ class IsVerifiedAndInstitutionAssociated(permissions.BasePermission):
             return True
 
         user_inst = getattr(request.user, "institution", None)
-        # Determine the institution of the object:
-        if hasattr(obj, "institution"):
-            # Board
+        obj_inst = None
+
+        if isinstance(obj, Board):
             obj_inst = obj.institution
-        elif hasattr(obj, "board"):
-            # Post
+        elif isinstance(obj, Post):
             obj_inst = obj.board.institution
-        elif hasattr(obj, "post"):
-            # Comment
+        elif isinstance(obj, Comment):
             obj_inst = obj.post.board.institution
+        elif isinstance(obj, Report):
+            if obj.post:
+                obj_inst = obj.post.board.institution
+            elif obj.comment:
+                obj_inst = obj.comment.post.board.institution
         else:
-            return False  # Unknown object type.
+            return False # Unknown object type.
 
         return user_inst == obj_inst
