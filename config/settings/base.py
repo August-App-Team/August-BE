@@ -192,6 +192,8 @@ REST_AUTH = {
     "JWT_AUTH_COOKIE": "august-auth",
     "JWT_AUTH_REFRESH_COOKIE": "august-refresh-token",
     "JWT_AUTH_HTTPONLY": False,  # refresh_token will not be sent if True
+    "JWT_AUTH_SECURE": True, # Set the cookie as secure
+    "JWT_AUTH_SAMESITE": "None", # Set the cookie as SameSite=None
 }
 
 # allauth
