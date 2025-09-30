@@ -73,7 +73,6 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "courses",
     "wizard",
-    "scraper",
     "users",
     "timetables",
     "friends",
