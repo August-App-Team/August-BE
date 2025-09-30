@@ -50,6 +50,29 @@ class Semester(models.Model):
         return str(self.code)
 
 
+class ScrapeTarget(models.Model):
+    admin_search_fields = (
+        "id",
+        "institution__full_name",
+        "institution__nickname",
+        "semester__code",
+    )
+    admin_list_filter = ("institution", "semester")
+
+    institution = models.ForeignKey("Institution", on_delete=models.CASCADE)
+    semester = models.ForeignKey("Semester", on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["institution", "semester"], name="unique_scrape_target"
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.institution.full_name} {self.semester.code}"
+
+
 class Course(models.Model):
     admin_search_fields = ("id", "name", "course_code")
     admin_list_filter = ("institution",)
